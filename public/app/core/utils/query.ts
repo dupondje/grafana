@@ -1,16 +1,23 @@
 import _ from 'lodash';
 import { DataQuery } from '@grafana/data';
 
-export const getNextRefIdChar = (queries: DataQuery[]): string => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const lettersToNumber = (letters: string): number =>
+  letters.split('').reduce((r, a) => r * 26 + parseInt(a, 36) - 9, 0) - 1;
 
-  return (
-    _.find(letters, (refId) => {
-      return _.every(queries, (other) => {
-        return other.refId !== refId;
-      });
-    }) ?? 'NA'
-  );
+const numberToLetters = (number: number): string => {
+  let result = '';
+  do {
+    result = ((number % 26) + 10).toString(36) + result;
+    number = Math.floor(number / 26) - 1;
+  } while (number >= 0);
+  return result.toUpperCase();
+};
+
+export const getNextRefIdChar = (queries: DataQuery[]): string => {
+  if (queries.length === 0) {
+    return 'A';
+  }
+  return numberToLetters(lettersToNumber(_.last(queries)?.refId ?? '') + 1);
 };
 
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
